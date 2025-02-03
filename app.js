@@ -1,12 +1,12 @@
-// TODO: Import required modules
-// Hint: You will need the 'fs' module for reading the file and the 'chalk' library for coloring the words.
+const fs = require('fs');
+const chalk = require('chalk');
 
 /**
  * Synchronously reads the content of 'declaration.txt'.
  * @returns {string} The content of the file.
  */
 function readFileContent() {
-    // TODO: Use the 'fs' module to synchronously read the content of 'declaration.txt' and return it.
+    return fs.readFileSync('declaration.txt', 'utf8');
 }
 
 /**
@@ -15,11 +15,19 @@ function readFileContent() {
  * @returns {Object} An object with words as keys and their occurrences as values.
  */
 function getWordCounts(content) {
-    // TODO: Implement a function to count occurrences of each word in the content.
-    // Hint: Consider splitting the content into words and then tallying the counts.
-    const wordCount = {};
-    const words = content.split(/\W+/).filter(Boolean); // Splitting by non-word characters.
+    const words = content.match(/\b\w+\b/g);
+    const wordCounts = {};
 
+    words.forEach(word => {
+        const normalizedWord = word.toLowerCase();
+        if (wordCounts[normalizedWord]) {
+            wordCounts[normalizedWord]++;
+        } else {
+            wordCounts[normalizedWord] = 1;
+        }
+    });
+
+    return wordCounts;
 }
 
 /**
@@ -29,32 +37,45 @@ function getWordCounts(content) {
  * @returns {string} The colored word.
  */
 function colorWord(word, count) {
-    // TODO: Return the word colored based on its frequency using the 'chalk' library.
-    // For example: 
-    // - Words that occur once can be blue
-    // - Words that occur between 2 and 5 times can be green
-    // - Words that occur more than 5 times can be red
+    if (count === 1) {
+        return chalk.blue(word);
+    } else if (count <= 5) {
+        return chalk.green(word);
+    } else {
+        return chalk.red(word);
+    }
 }
 
 /**
  * Prints the first 15 lines of the content with colored words.
+ * This function replaces punctuation (non-word characters) with a space,
+ * while preserving pure whitespace.
+ *
  * @param {string} content The file content.
- * @param {Object} wordCount The word occurrences.
+ * @param {Object} wordCount An object containing word occurrences.
  */
 function printColoredLines(content, wordCount) {
     const lines = content.split('\n').slice(0, 15);
 
     for (const line of lines) {
-        const coloredLine = line.split(/\W+/).map(word => {
-            // TODO: Color the word based on its frequency using the 'colorWord' function.
-        }).join(' ');
+        const coloredLine = line.split(/(\W+)/).map(token => {
+            if (/^\s+$/.test(token)) {
+                // Preserve pure whitespace.
+                return token;
+            } else if (/^\W+$/.test(token)) {
+                // Replace punctuation and other non-word tokens with a space.
+                return ' ';
+            }
+            // Color the word based on its frequency.
+            return colorWord(token, wordCount[token.toLowerCase()] || 0);
+        }).join('');
 
         console.log(coloredLine);
     }
 }
 
 /**
- * Main function to read the file, count the word occurrences and print the colored lines.
+ * Main function to read the file, count the word occurrences, and print the colored lines.
  */
 function processFile() {
     const content = readFileContent();
@@ -67,5 +88,10 @@ if (require.main === module) {
     processFile();
 }
 
-// TODO: Export the functions for testing
-// Hint: You can use the 'module.exports' syntax.
+module.exports = {
+    readFileContent,
+    getWordCounts,
+    colorWord,
+    printColoredLines,
+    processFile
+};
